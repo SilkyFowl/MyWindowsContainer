@@ -1,11 +1,12 @@
 # escape=`
 
 ARG WindowsNanoServerRepo=mcr.microsoft.com/windows/nanoserver
+ARG CORETAG=20H2
 ARG TAG=20H2
 
 # Reference
 # https://github.com/PowerShell/PowerShell-Docker/blob/master/release/lts/windowsservercore20H2/docker/Dockerfile
-FROM core:${TAG} as installer-env
+FROM core:${CORETAG} as installer-env
 
 # Install win32-openssh
 RUN scoop install -g win32-openssh;
@@ -48,11 +49,18 @@ RUN $stopTime = (get-date).AddMinutes(15); `
 # Create a user to login, as containeradministrator password is unknown
 RUN net USER ssh "Passw0rd" /ADD && net localgroup "Administrators" "ssh" /ADD; `
     # sshd setting
+    $PSNativeCommandArgumentPassing = 'Legacy'; `
     .\ProgramData\scoop\apps\win32-openssh\current\install-sshd.ps1 `
     .\ProgramData\scoop\apps\win32-openssh\current\FixHostFilePermissions.ps1 -Confirm:$false; `
     New-Item -Path HKLM:\SOFTWARE -Name OpenSSH -Force; `
     Set-ItemProperty HKLM:\SOFTWARE\OpenSSH\ -Name DefaultShell -Value (Get-Command pwsh).Source -Type String -Force; `
     Get-Service ssh* | Set-Service -StartupType Automatic;
+
+COPY profile.ps1 "C:\profile.ps1"
+RUN Move-Item C:\profile.ps1 "$env:ProgramFiles\PowerShell\latest\profile.ps1"; `
+    cd $pshome; `
+    ni -it SymbolicLink -Path powershell.exe -Target .\pwsh.exe; `
+    cd -;
 
 EXPOSE 22
 

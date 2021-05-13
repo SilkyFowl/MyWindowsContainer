@@ -10,7 +10,7 @@ ARG TAG=20H2
 # As this is a multi-stage build, this stage will eventually be thrown away
 FROM ${WindowsServerCoreRepo}:${TAG} AS installer-env
 
-ARG PS_VERSION=7.2.0-preview.4
+ARG PS_VERSION=7.2.0-preview.5
 ARG PS_PACKAGE_URL=https://github.com/PowerShell/PowerShell/releases/download/v${PS_VERSION}/PowerShell-${PS_VERSION}-win-x64.zip
 
 SHELL ["C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "-command"]
@@ -71,6 +71,7 @@ RUN & $pshome\Install-PowerShellRemoting.ps1; `
     # Install common tools
     Set-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name 'LongPathsEnabled' -Value 1; `
     scoop install -g 7zip,innounp,dark,git,gsudo; `
+    $PSNativeCommandArgumentPassing = 'Legacy'; `
     scoop bucket add extras; `
     scoop install -g extras/vcredist2015; `
     # Install common tools
